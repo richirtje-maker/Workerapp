@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mijn School App</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --muted: #94a3b8;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 480px;
+            min-height: 100vh;
+            background: var(--bg-color);
+            padding: 20px;
+            box-sizing: border-box;
+            padding-bottom: 80px;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        h1 { font-size: 1.5rem; margin: 0; }
+        .status-badge {
+            font-size: 0.75rem;
+            background: #065f46;
+            color: #34d399;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .card h3 { margin-top: 0; font-size: 1.1rem; color: var(--accent); }
+        ul { padding-left: 20px; margin: 8px 0; }
+        li { margin-bottom: 6px; }
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+        }
+        button:hover { background: var(--accent-hover); }
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: #1e293b;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            border-top: 1px solid #334155;
+        }
+        .nav-item {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .nav-item.active { color: var(--accent); }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div>
+                <h1 id="page-title">Vandaag</h1>
+                <span style="font-size: 0.8rem; color: var(--muted);" id="last-update">Laatste update: net</span>
+            </div>
+            <span class="status-badge" id="sync-status">Live</span>
+        </header>
+
+        <!-- TAB 1: VANDAAG -->
+        <div id="tab-vandaag" class="tab-content">
+            <div class="card">
+                <h3>Volgende Les</h3>
+                <p id="next-lesson">Laden...</p>
+            </div>
+            <div class="card">
+                <h3>Huiswerk Vandaag</h3>
+                <ul id="homework-list">
+                    <li>Laden...</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- TAB 2: ROOSTER -->
+        <div id="tab-rooster" class="tab-content hidden">
+            <div class="card">
+                <h3>Rooster Vandaag</h3>
+                <ul id="schedule-list">
+                    <li>Laden...</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- TAB 3: CIJFERS -->
+        <div id="tab-cijfers" class="tab-content hidden">
+            <div class="card">
+                <h3>Recente Cijfers</h3>
+                <ul id="grades-list">
+                    <li>Laden...</li>
+                </ul>
+                <button onclick="checkNewGrades()">Controleer op nieuwe cijfers</button>
+            </div>
+        </div>
+
+        <!-- NAVIGATIE ONDERIN -->
+        <div class="nav-bar">
+            <a class="nav-item active" onclick="switchTab('vandaag', this)">Vandaag</a>
+            <a class="nav-item" onclick="switchTab('rooster', this)">Rooster</a>
+            <a class="nav-item" onclick="switchTab('cijfers', this)">Cijfers</a>
+        </div>
+    </div>
+
+    <script>
+        // Startdata (simulatie van Magister-sync)
+        let appData = {
+            nextLesson: "Wiskunde - Lokaal 204 (10:30)",
+            homework: ["Wiskunde: Havo/VWO opgave 4 t/m 8", "Frans: Woordjes leren p. 45"],
+            schedule: [
+                "1e Uur: Biologie (Lokaal 102)",
+                "2e Uur: Geschiedenis (Lokaal 305)",
+                "3e Uur: Tussenuur",
+                "4e Uur: Wiskunde (Lokaal 204)"
+            ],
+            grades: [
+                "Wiskunde: 7.8 (Proefwerk)",
+                "Engels: 8.2 (Vocabulaire)",
+                "Biologie: 6.9 (Verslag)"
+            ]
+        };
+
+        function render() {
+            document.getElementById('next-lesson').innerText = appData.nextLesson;
+            
+            let hwHtml = appData.homework.map(h => `<li>${h}</li>`).join('');
+            document.getElementById('homework-list').innerHTML = hwHtml;
+
+            let schHtml = appData.schedule.map(s => `<li>${s}</li>`).join('');
+            document.getElementById('schedule-list').innerHTML = schHtml;
+
+            let grHtml = appData.grades.map(g => `<li>${g}</li>`).join('');
+            document.getElementById('grades-list').innerHTML = grHtml;
+
+            let now = new Date();
+            document.getElementById('last-update').innerText = `Laatste update: ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        }
+
+        function switchTab(tabName, element) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+
+            const titles = { 'vandaag': 'Vandaag', 'rooster': 'Rooster', 'cijfers': 'Cijfers' };
+            document.getElementById('page-title').innerText = titles[tabName];
+        }
+
+        // Automatische update functie (simuleert dat hij op de achtergrond checkt voor nieuwe cijfers)
+        function checkNewGrades() {
+            const badge = document.getElementById('sync-status');
+            badge.innerText = "Syncing...";
+            
+            setTimeout(() => {
+                // Hier zou straks de echte fetch naar Magister of je backend komen
+                badge.innerText = "Live";
+                alert("Gecontroleerd! Alles is up-to-date.");
+                render();
+            }, 1000);
+        }
+
+        // Automatisch elke 5 minuten even "updaten"
+        setInterval(checkNewGrades, 300000);
+
+        render();
+    </script>
+</body>
+</html>
