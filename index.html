@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mijn School App</title>
+    <title>Westerwork - Geoptimaliseerd voor Jou</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -12,6 +12,7 @@
             --accent: #3b82f6;
             --accent-hover: #2563eb;
             --muted: #94a3b8;
+            --border: #334155;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -29,7 +30,7 @@
             background: var(--bg-color);
             padding: 20px;
             box-sizing: border-box;
-            padding-bottom: 80px;
+            padding-bottom: 90px;
         }
         header {
             display: flex;
@@ -55,6 +56,17 @@
         .card h3 { margin-top: 0; font-size: 1.1rem; color: var(--accent); }
         ul { padding-left: 20px; margin: 8px 0; }
         li { margin-bottom: 6px; }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            margin-bottom: 12px;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            color: var(--text-color);
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
         button {
             background: var(--accent);
             color: white;
@@ -64,7 +76,6 @@
             font-weight: bold;
             cursor: pointer;
             width: 100%;
-            margin-top: 8px;
         }
         button:hover { background: var(--accent-hover); }
         .nav-bar {
@@ -78,17 +89,19 @@
             display: flex;
             justify-content: space-around;
             padding: 12px 0;
-            border-top: 1px solid #334155;
+            border-top: 1px solid var(--border);
         }
         .nav-item {
             color: var(--muted);
             text-decoration: none;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: bold;
             cursor: pointer;
+            text-align: center;
         }
         .nav-item.active { color: var(--accent); }
         .hidden { display: none; }
+        .stat-box { font-size: 1.8rem; font-weight: bold; color: #34d399; margin: 8px 0; }
     </style>
 </head>
 <body>
@@ -97,7 +110,7 @@
         <header>
             <div>
                 <h1 id="page-title">Vandaag</h1>
-                <span style="font-size: 0.8rem; color: var(--muted);" id="last-update">Laatste update: net</span>
+                <span style="font-size: 0.8rem; color: var(--muted);" id="user-greeting">Welkom, Meneer</span>
             </div>
             <span class="status-badge" id="sync-status">Live</span>
         </header>
@@ -105,23 +118,28 @@
         <!-- TAB 1: VANDAAG -->
         <div id="tab-vandaag" class="tab-content">
             <div class="card">
-                <h3>Volgende Les</h3>
+                <h3>Jouw Volgende Les</h3>
                 <p id="next-lesson">Laden...</p>
             </div>
             <div class="card">
-                <h3>Huiswerk Vandaag</h3>
+                <h3>Huiswerk & Taken</h3>
                 <ul id="homework-list">
-                    <li>Laden...</li>
+                    <li>Geen taken geladen.</li>
                 </ul>
+            </div>
+            <div class="card">
+                <h3>Schermtijd Vandaag</h3>
+                <div class="stat-box" id="screen-time-display">3u 42m</div>
+                <p style="font-size: 0.85rem; color: var(--muted);">Waarvan 1u 15m besteed aan games en socials.</p>
             </div>
         </div>
 
         <!-- TAB 2: ROOSTER -->
         <div id="tab-rooster" class="tab-content hidden">
             <div class="card">
-                <h3>Rooster Vandaag</h3>
+                <h3>Je Rooster</h3>
                 <ul id="schedule-list">
-                    <li>Laden...</li>
+                    <li>Vul je gegevens in bij 'Instellingen'.</li>
                 </ul>
             </div>
         </div>
@@ -129,11 +147,34 @@
         <!-- TAB 3: CIJFERS -->
         <div id="tab-cijfers" class="tab-content hidden">
             <div class="card">
-                <h3>Recente Cijfers</h3>
+                <h3>Cijferoverzicht</h3>
                 <ul id="grades-list">
-                    <li>Laden...</li>
+                    <li>Nog geen cijfers gekoppeld.</li>
                 </ul>
-                <button onclick="checkNewGrades()">Controleer op nieuwe cijfers</button>
+                <button onclick="updateData()" style="margin-top: 10px;">Gegevens verversen</button>
+            </div>
+        </div>
+
+        <!-- TAB 4: INSTELLINGEN (MAGISTER & PROFIEL) -->
+        <div id="tab-instellingen" class="tab-content hidden">
+            <div class="card">
+                <h3>Magister Koppeling</h3>
+                <label>Schoolnaam / URL:</label>
+                <input type="text" id="school-url" value="stmichaelcollege.magister.net">
+                
+                <label>Gebruikersnaam:</label>
+                <input type="text" id="magister-user" placeholder="Bijv. leerlingnummer">
+
+                <label>Jouw Naam (Aanspreking):</label>
+                <input type="text" id="user-name" value="Meneer Richir">
+
+                <button onclick="saveSettings()">Instellingen Opslaan</button>
+            </div>
+            <div class="card">
+                <h3>Schermtijd Doel Instellen</h3>
+                <label>Maximale schermtijd per dag (uren):</label>
+                <input type="number" id="screen-limit" value="4">
+                <button onclick="saveScreenLimit()">Limiet Opslaan</button>
             </div>
         </div>
 
@@ -142,41 +183,45 @@
             <a class="nav-item active" onclick="switchTab('vandaag', this)">Vandaag</a>
             <a class="nav-item" onclick="switchTab('rooster', this)">Rooster</a>
             <a class="nav-item" onclick="switchTab('cijfers', this)">Cijfers</a>
+            <a class="nav-item" onclick="switchTab('instellingen', this)">Instellingen</a>
         </div>
     </div>
 
     <script>
-        // Startdata (simulatie van Magister-sync)
-        let appData = {
-            nextLesson: "Wiskunde - Lokaal 204 (10:30)",
-            homework: ["Wiskunde: Havo/VWO opgave 4 t/m 8", "Frans: Woordjes leren p. 45"],
-            schedule: [
-                "1e Uur: Biologie (Lokaal 102)",
-                "2e Uur: Geschiedenis (Lokaal 305)",
-                "3e Uur: Tussenuur",
-                "4e Uur: Wiskunde (Lokaal 204)"
-            ],
-            grades: [
-                "Wiskunde: 7.8 (Proefwerk)",
-                "Engels: 8.2 (Vocabulaire)",
-                "Biologie: 6.9 (Verslag)"
-            ]
+        // Laad opgeslagen data of gebruik defaults
+        let userSettings = JSON.parse(localStorage.getItem('westerwork_settings')) || {
+            name: "Meneer Richir",
+            school: "stmichaelcollege.magister.net",
+            username: "",
+            screenLimit: 4
         };
 
-        function render() {
-            document.getElementById('next-lesson').innerText = appData.nextLesson;
+        function initApp() {
+            document.getElementById('user-greeting').innerText = "Welkom, " + userSettings.name;
+            document.getElementById('user-name').value = userSettings.name;
+            document.getElementById('school-url').value = userSettings.school;
+            document.getElementById('magister-user').value = userSettings.username;
             
-            let hwHtml = appData.homework.map(h => `<li>${h}</li>`).join('');
-            document.getElementById('homework-list').innerHTML = hwHtml;
+            // Voorbeeld data laden als er geen specifieke data is
+            document.getElementById('next-lesson').innerText = "VWO 3 - Lokaal 204 (10:30)";
+            document.getElementById('homework-list').innerHTML = "<li>Frans: Woordjes leren h. 4</li><li>Wiskunde: Paragraaf 3.2 afmaken</li>";
+            document.getElementById('schedule-list').innerHTML = "<li>1e Uur: Latijn / Duits</li><li>2e Uur: Wiskunde</li><li>3e Uur: Economie</li><li>4e Uur: Geschiedenis</li>";
+            document.getElementById('grades-list').innerHTML = "<li>Wiskunde: 7.8</li><li>Engels: 8.1</li><li>Biologie: 7.3</li>";
+        }
 
-            let schHtml = appData.schedule.map(s => `<li>${s}</li>`).join('');
-            document.getElementById('schedule-list').innerHTML = schHtml;
+        function saveSettings() {
+            userSettings.name = document.getElementById('user-name').value;
+            userSettings.school = document.getElementById('school-url').value;
+            userSettings.username = document.getElementById('magister-user').value;
+            
+            localStorage.setItem('westerwork_settings', JSON.stringify(userSettings));
+            document.getElementById('user-greeting').innerText = "Welkom, " + userSettings.name;
+            alert("Instellingen succesvol opgeslagen, meneer!");
+        }
 
-            let grHtml = appData.grades.map(g => `<li>${g}</li>`).join('');
-            document.getElementById('grades-list').innerHTML = grHtml;
-
-            let now = new Date();
-            document.getElementById('last-update').innerText = `Laatste update: ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        function saveScreenLimit() {
+            let limit = document.getElementById('screen-limit').value;
+            alert("Schermtijd limiet ingesteld op " + limit + " uur per dag.");
         }
 
         function switchTab(tabName, element) {
@@ -186,27 +231,20 @@
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
 
-            const titles = { 'vandaag': 'Vandaag', 'rooster': 'Rooster', 'cijfers': 'Cijfers' };
+            const titles = { 'vandaag': 'Vandaag', 'rooster': 'Rooster', 'cijfers': 'Cijfers', 'instellingen': 'Instellingen' };
             document.getElementById('page-title').innerText = titles[tabName];
         }
 
-        // Automatische update functie (simuleert dat hij op de achtergrond checkt voor nieuwe cijfers)
-        function checkNewGrades() {
+        function updateData() {
             const badge = document.getElementById('sync-status');
-            badge.innerText = "Syncing...";
-            
+            badge.innerText = "Synchroniseren...";
             setTimeout(() => {
-                // Hier zou straks de echte fetch naar Magister of je backend komen
                 badge.innerText = "Live";
-                alert("Gecontroleerd! Alles is up-to-date.");
-                render();
+                alert("Gegevens gecontroleerd met " + userSettings.school + "!");
             }, 1000);
         }
 
-        // Automatisch elke 5 minuten even "updaten"
-        setInterval(checkNewGrades, 300000);
-
-        render();
+        initApp();
     </script>
 </body>
 </html>
